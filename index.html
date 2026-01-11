@@ -1,1 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Scorecard - Live Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1><i class="fas fa-cricket"></i> Cricket Scorecard Pro</h1>
+            <div class="header-controls">
+                <button class="btn-undo" id="undoBtn" title="Undo last action">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+                <button class="btn-reset" id="resetBtn" title="Reset match">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </header>
 
+        <!-- Match Setup Modal -->
+        <div class="modal" id="setupModal">
+            <div class="modal-content">
+                <h2><i class="fas fa-cog"></i> Match Setup</h2>
+                
+                <div class="setup-form">
+                    <div class="form-group">
+                        <label for="teamName"><i class="fas fa-flag"></i> Team Name</label>
+                        <input type="text" id="teamName" placeholder="Enter team name" value="Local Team">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="overs"><i class="fas fa-clock"></i> Match Overs</label>
+                        <select id="overs">
+                            <option value="5">5 Overs</option>
+                            <option value="10">10 Overs</option>
+                            <option value="20" selected>20 Overs</option>
+                            <option value="50">50 Overs</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user-friends"></i> Add Players</h3>
+                        <div class="player-input-group">
+                            <input type="text" id="playerName" placeholder="Player name">
+                            <select id="playerType">
+                                <option value="batsman">Batsman</option>
+                                <option value="bowler">Bowler</option>
+                                <option value="allrounder">All-rounder</option>
+                            </select>
+                            <button class="btn-add" id="addPlayerBtn">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                        
+                        <div class="player-list-container">
+                            <h4>Player List</h4>
+                            <div class="player-list" id="playerList">
+                                <!-- Players will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetRuns"><i class="fas fa-bullseye"></i> Target Runs (if chasing)</label>
+                        <input type="number" id="targetRuns" placeholder="Leave empty if batting first" min="0">
+                    </div>
+                    
+                    <button class="btn-start" id="startMatchBtn">
+                        <i class="fas fa-play"></i> Start Match
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Scoreboard -->
+        <div class="scoreboard" id="scoreboard" style="display: none;">
+            <div class="scoreboard-header">
+                <div class="team-info">
+                    <h2 id="teamDisplay">Local Team</h2>
+                    <div class="match-info">
+                        <span class="overs-info" id="oversInfo">20 Overs Match</span>
+                        <span class="target-info" id="targetInfo"></span>
+                    </div>
+                </div>
+                
+                <div class="score-display">
+                    <div class="score-main">
+                        <span class="score" id="scoreRuns">0</span>
+                        <span class="score-separator">/</span>
+                        <span class="score" id="scoreWickets">0</span>
+                    </div>
+                    <div class="overs-display">
+                        <span class="overs" id="currentOvers">0.0</span>
+                        <span class="overs-label">overs</span>
+                    </div>
+                </div>
+                
+                <div class="match-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">CRR</span>
+                        <span class="stat-value" id="crrValue">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Req. RR</span>
+                        <span class="stat-value" id="rrrValue">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Balls Left</span>
+                        <span class="stat-value" id="ballsLeft">120</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Extras Display -->
+            <div class="extras-display">
+                <h3><i class="fas fa-plus-circle"></i> Extras</h3>
+                <div class="extras-list">
+                    <span class="extra-item">WD: <span id="wdCount">0</span></span>
+                    <span class="extra-item">NB: <span id="nbCount">0</span></span>
+                    <span class="extra-item">B: <span id="bCount">0</span></span>
+                    <span class="extra-item">LB: <span id="lbCount">0</span></span>
+                    <span class="extra-item">Total: <span id="totalExtras">0</span></span>
+                </div>
+            </div>
+            
+            <!-- Player Selection Section -->
+            <div class="player-selection">
+                <div class="selection-card">
+                    <h3><i class="fas fa-baseball-bat"></i> Select Batsmen</h3>
+                    <div class="selection-grid">
+                        <div class="selection-group">
+                            <label for="strikerSelect">Striker *</label>
+                            <select id="strikerSelect" class="player-select">
+                                <option value="">Select striker</option>
+                            </select>
+                        </div>
+                        <div class="selection-group">
+                            <label for="nonStrikerSelect">Non-striker *</label>
+                            <select id="nonStrikerSelect" class="player-select">
+                                <option value="">Select non-striker</option>
+                            </select>
+                        </div>
+                        <div class="selection-group">
+                            <label for="newBatsmanSelect">New Batsman (After wicket)</label>
+                            <select id="newBatsmanSelect" class="player-select">
+                                <option value="">Select new batsman</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="selection-card">
+                    <h3><i class="fas fa-baseball-ball"></i> Select Bowler</h3>
+                    <div class="selection-grid">
+                        <div class="selection-group">
+                            <label for="currentBowlerSelect">Current Bowler *</label>
+                            <select id="currentBowlerSelect" class="player-select">
+                                <option value="">Select bowler</option>
+                            </select>
+                        </div>
+                        <div class="selection-group">
+                            <label for="nextBowlerSelect">Next Bowler (After over)</label>
+                            <select id="nextBowlerSelect" class="player-select">
+                                <option value="">Select next bowler</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Batting Stats -->
+            <div class="stats-section">
+                <h3><i class="fas fa-bat"></i> Batting Statistics</h3>
+                <div class="table-container">
+                    <table class="stats-table" id="battingTable">
+                        <thead>
+                            <tr>
+                                <th>Batsman</th>
+                                <th>R</th>
+                                <th>B</th>
+                                <th>4s</th>
+                                <th>6s</th>
+                                <th>SR</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="battingStatsBody">
+                            <!-- Batting stats will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Bowling Stats -->
+            <div class="stats-section">
+                <h3><i class="fas fa-ball"></i> Bowling Statistics</h3>
+                <div class="table-container">
+                    <table class="stats-table" id="bowlingTable">
+                        <thead>
+                            <tr>
+                                <th>Bowler</th>
+                                <th>O</th>
+                                <th>M</th>
+                                <th>R</th>
+                                <th>W</th>
+                                <th>Econ</th>
+                                <th>Current</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bowlingStatsBody">
+                            <!-- Bowling stats will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-section">
+                <h3><i class="fas fa-bolt"></i> Add Runs</h3>
+                <div class="run-buttons">
+                    <button class="run-btn" data-runs="0">0</button>
+                    <button class="run-btn" data-runs="1">1</button>
+                    <button class="run-btn" data-runs="2">2</button>
+                    <button class="run-btn" data-runs="3">3</button>
+                    <button class="run-btn" data-runs="4">4</button>
+                    <button class="run-btn" data-runs="6">6</button>
+                </div>
+                
+                <h3><i class="fas fa-exclamation-circle"></i> Extras & Wicket</h3>
+                <div class="extra-buttons">
+                    <button class="extra-btn" data-extra="wide">
+                        <i class="fas fa-arrow-right"></i> Wide
+                    </button>
+                    <button class="extra-btn" data-extra="noBall">
+                        <i class="fas fa-ban"></i> No Ball
+                    </button>
+                    <button class="extra-btn" data-extra="bye">
+                        <i class="fas fa-running"></i> Bye
+                    </button>
+                    <button class="extra-btn" data-extra="legBye">
+                        <i class="fas fa-user"></i> Leg Bye
+                    </button>
+                    <button class="wicket-btn" id="wicketBtn">
+                        <i class="fas fa-skull-crossbones"></i> WICKET
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Over Progress -->
+            <div class="over-progress">
+                <h3><i class="fas fa-history"></i> This Over</h3>
+                <div class="balls-container" id="currentOverBalls">
+                    <!-- Ball indicators will be added here -->
+                </div>
+                <div class="over-summary">
+                    <div class="over-details">
+                        <span>Current Bowler: <strong id="currentBowlerName">-</strong></span>
+                        <span>Over: <strong id="overNumber">1</strong>.<strong id="ballNumber">0</strong></span>
+                    </div>
+                    <button class="btn-change-strike" id="changeStrikeBtn">
+                        <i class="fas fa-exchange-alt"></i> Change Strike
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Recent Actions -->
+            <div class="recent-actions">
+                <h3><i class="fas fa-history"></i> Recent Actions</h3>
+                <div class="actions-log" id="actionsLog">
+                    <!-- Action history will be shown here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wicket Modal -->
+        <div class="modal" id="wicketModal">
+            <div class="modal-content">
+                <h2><i class="fas fa-skull-crossbones"></i> Select Wicket Type</h2>
+                <div class="wicket-options">
+                    <button class="wicket-type-btn" data-type="bowled">
+                        <i class="fas fa-baseball-ball"></i> Bowled
+                    </button>
+                    <button class="wicket-type-btn" data-type="caught">
+                        <i class="fas fa-hand-paper"></i> Caught
+                    </button>
+                    <button class="wicket-type-btn" data-type="lbw">
+                        <i class="fas fa-leg"></i> LBW
+                    </button>
+                    <button class="wicket-type-btn" data-type="runOut">
+                        <i class="fas fa-running"></i> Run Out
+                    </button>
+                    <button class="wicket-type-btn" data-type="stumped">
+                        <i class="fas fa-user"></i> Stumped
+                    </button>
+                    <button class="wicket-type-btn" data-type="hitWicket">
+                        <i class="fas fa-user-times"></i> Hit Wicket
+                    </button>
+                </div>
+                <div class="wicket-details" id="wicketDetails" style="display: none;">
+                    <div class="form-group">
+                        <label for="fielderSelect">Fielder (for caught/run out/stumped)</label>
+                        <select id="fielderSelect">
+                            <option value="">Select fielder</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" id="cancelWicketBtn">Cancel</button>
+                    <button class="btn-confirm" id="confirmWicketBtn">Confirm Wicket</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Cricket Scorecard Pro &copy; 2024 | Made with <i class="fas fa-heart"></i> for Cricket Lovers</p>
+            <div class="footer-info">
+                <span><i class="fas fa-code"></i> HTML/CSS/JavaScript</span>
+                <span><i class="fas fa-mobile-alt"></i> Fully Responsive</span>
+                <span><i class="fas fa-cloud"></i> GitHub Pages Ready</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
